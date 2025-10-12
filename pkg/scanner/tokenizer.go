@@ -133,6 +133,31 @@ func tokenizeSeparator(c context) (*token.Token, error) {
 	return nil, errNoMatch
 }
 
+func tokenizeIdentifier(c context) (*token.Token, error) {
+	r, _ := c.current()
+	if !unicode.IsLetter(r) && r != '_' {
+		return nil, errNoMatch
+	}
+	start := c.position().Position
+	for {
+		r, _ = c.current()
+		if c.eof() || !(unicode.IsLetter(r) || unicode.IsDigit(r) || r == '_') {
+			break
+		}
+		c.advance(1)
+	}
+
+	str, err := c.slice(start, c.position().Position)
+	if err != nil {
+		return nil, err
+	}
+	if !token.IsIdentifier(str) {
+		c.backwards(c.position().Position - start)
+		return nil, errNoMatch
+	}
+	return c.new(str, token.Identifier), nil
+}
+
 func selectWordAndCheck(c context, collection token.Collection) (string, error) {
 	if r, _ := c.current(); !unicode.IsLetter(r) {
 		return "", errNoMatch

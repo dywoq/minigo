@@ -92,6 +92,8 @@ var (
 		"...",
 		".",
 		"//",
+		"=",
+		":=",
 	}
 
 	Types Collection = Collection{

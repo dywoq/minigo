@@ -13,9 +13,14 @@ type Parser struct {
 	pos     int
 	parsing bool
 	d       debug
+	mini    []mini
 }
 
 var ErrWorking = errors.New("parser: parser is working")
+
+var miniParsers = []mini{
+	parseVariable,
+}
 
 type debug struct {
 	p  *Parser
@@ -47,6 +52,28 @@ func (p *Parser) SetTokens(t []*token.Token) error {
 // Returns ast.Program node with the set statements.
 func (p *Parser) Parse() (ast.Node, error) {
 	panic("implement me!")
+}
+
+func (p *Parser) advance(n int) error {
+	if p.pos+n >= len(p.tokens) {
+		return errors.New("p.pos+n is overflow")
+	}
+	for range n {
+		p.pos++
+	}
+	return nil
+}
+
+func (p *Parser) eof() bool {
+	t, _ := p.current()
+	return p.pos >= len(p.tokens) || t.Kind == token.Eof
+}
+
+func (p *Parser) current() (*token.Token, error) {
+	if p.eof() {
+		return nil, io.EOF
+	}
+	return p.tokens[p.pos], nil
 }
 
 // On reports whether the debug mode is on.

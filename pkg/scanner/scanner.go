@@ -32,6 +32,7 @@ type debug struct {
 var ErrWorking = errors.New("scanner: scanning right now")
 
 var defaultTokenizers = []tokenizer{
+	tokenizeIdentifier,
 	tokenizeKeyword,
 	tokenizeType,
 	tokenizeNumber,
@@ -180,24 +181,24 @@ func (s *Scanner) new(literal string, kind token.Kind) *token.Token {
 }
 
 func (s *Scanner) advance(n int) error {
-    if n < 0 {
-        return errors.New("advance: cannot move forward by a negative amount")
-    }
-    for range n {
-        if s.eof() {
-            return io.EOF
-        }
-        r := rune(s.input[s.p.Position])
-        s.p.Position++
-        if r == '\n' {
-            s.p.Line++
-            s.p.Column = 1
-        } else {
-            s.p.Column++
-        }
-        s.debugf("advanced to pos=%d line=%d col=%d", s.p.Position, s.p.Line, s.p.Column)
-    }
-    return nil
+	if n < 0 {
+		return errors.New("advance: cannot move forward by a negative amount")
+	}
+	for range n {
+		if s.eof() {
+			return io.EOF
+		}
+		r := rune(s.input[s.p.Position])
+		s.p.Position++
+		if r == '\n' {
+			s.p.Line++
+			s.p.Column = 1
+		} else {
+			s.p.Column++
+		}
+		s.debugf("advanced to pos=%d line=%d col=%d", s.p.Position, s.p.Line, s.p.Column)
+	}
+	return nil
 }
 
 func (s *Scanner) backwards(n int) error {
