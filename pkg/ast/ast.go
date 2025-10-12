@@ -36,9 +36,11 @@ type Variable struct {
 //      // ...
 //  }
 type Function struct {
-	Literal   Node               `json:"literal"`
-	Arguments []FunctionArgument `json:"arguments"`
-	Exported  bool               `json:"exported"`
+	Name       string             `json:"name"`
+	ReturnType string             `json:"return_type"`
+	Exported   bool               `json:"exported"`
+	Arguments  []FunctionArgument `json:"arguments"`
+	Body       []Node             `json:"body"`
 }
 
 // FunctionArgument presentation in code:
@@ -73,9 +75,21 @@ type CallArgument struct {
 	Value string     `json:"value"`
 }
 
+// FunctionValue presentation in code:
+//
+//  var greet = func(name string) {
+//     // ...
+//  }
+type FunctionValue struct {
+	ReturnType string             `json:"return_type"`
+	Arguments  []FunctionArgument `json:"arguments"`
+	Body       []Node             `json:"node"`
+}
+
 func (Value) node()            {}
 func (Variable) node()         {}
 func (Function) node()         {}
 func (FunctionArgument) node() {}
 func (Call) node()             {}
 func (CallArgument) node()     {}
+func (FunctionValue) node()    {}
