@@ -1,5 +1,10 @@
 package token
 
+import (
+	"slices"
+	"unicode"
+)
+
 // Kind represents the token kind in string.
 type Kind string
 
@@ -7,10 +12,11 @@ type Kind string
 // which can't be usually used in the code.
 //
 // To check if a value exists in the collection, you simply can use slices.Contains:
-//  c := token.Collection{"func", "if", "return"}
-//  if !slices.Contains(c, "func") {
-//     panic("func doesn't exist in the collection")
-//  }
+//
+//	c := token.Collection{"func", "if", "return"}
+//	if !slices.Contains(c, "func") {
+//	   panic("func doesn't exist in the collection")
+//	}
 type Collection []string
 
 // Position represents the token position.
@@ -96,3 +102,30 @@ var (
 		"rune",
 	}
 )
+
+// IsIdentifier returns true if s is a valid identifier
+// and doesn't violate any rules regarding identifiers.
+// The rules are:
+//
+//   - must start with a letter or underscore;
+//   - can contain letters, digits, and underscores after the first character;
+//   - cannot be a keyword (like "func", "var", "if" etc.);
+//   - cannot contain any other symbols (like "@", "-", "!", "$").
+func IsIdentifier(s string) bool {
+	if s == "" {
+		return false
+	}
+	if slices.Contains(Keywords, s) {
+		return false
+	}
+	runes := []rune(s)
+	if !unicode.IsLetter(runes[0]) && runes[0] != '_' {
+		return false
+	}
+	for _, r := range runes[1:] {
+		if !unicode.IsLetter(r) && !unicode.IsDigit(r) && r != '_' {
+			return false
+		}
+	}
+	return true
+}
