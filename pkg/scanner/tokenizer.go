@@ -11,6 +11,7 @@ import (
 
 type context interface {
 	advance(n int) error
+	backwards(n int) error
 	current() (rune, error)
 	eof() bool
 	debug(v ...any) error
@@ -79,7 +80,6 @@ func tokenizeNumber(c context) (*token.Token, error) {
 		}
 		return c.new(str, token.Float), nil
 	}
-
 	str, err := c.slice(start, c.position().Position)
 	if err != nil {
 		return nil, err
@@ -120,7 +120,7 @@ func selectWordAndCheck(c context, collection token.Collection) (string, error) 
 		return "", err
 	}
 	if !slices.Contains(collection, str) {
-		c.position().Position = start
+		c.backwards(c.position().Position)
 		return "", errNoMatch
 	}
 	return str, nil

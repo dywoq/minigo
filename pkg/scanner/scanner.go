@@ -109,6 +109,7 @@ func (s *Scanner) SetReader(r io.Reader) error {
 func (s *Scanner) Scan() ([]*token.Token, error) {
 	result := []*token.Token{}
 	s.scanning = true
+	s.debug("starting scanning")
 	for !s.eof() {
 		tok, err := s.tokenize()
 		if err != nil {
@@ -121,6 +122,7 @@ func (s *Scanner) Scan() ([]*token.Token, error) {
 		result = append(result, tok)
 	}
 	result = append(result, token.NewToken("", token.Eof, s.p))
+	s.debug("ending scanning")
 	s.scanning = false
 	return result, nil
 }
@@ -143,9 +145,10 @@ func (s *Scanner) tokenize() (*token.Token, error) {
 
 func (s *Scanner) skipWhitespace() {
 	for {
-		if r, _ := s.current(); !unicode.IsSpace(r) {
+		if r, _ := s.current(); !unicode.IsSpace(r) || s.eof() {
 			break
 		}
+		s.debug("skipping whitespace")
 		s.advance(1)
 	}
 }
@@ -176,9 +179,34 @@ func (s *Scanner) advance(n int) error {
 			return err
 		}
 		s.p.Position++
+		s.debugf("advancing by %d", n)
 		if r == '\n' || s.eof() {
 			s.p.Column = 1
 			s.p.Line++
+		} else {
+			s.p.Column++
+		}
+	}
+	return nil
+}
+
+func (s *Scanner) backwards(n int) error {
+	if n < 0 {
+		return errors.New("backwards: cannot move backwards by a negative amount")
+	}
+	newPos := s.p.Position - n
+	if newPos < 0 {
+		return errors.New("backwards: would move position before start of input")
+	}
+	s.p.Position = newPos
+	s.p.Line = 1
+	s.p.Column = 1
+	for i := 0; i < s.p.Position; i++ {
+		r := rune(s.input[i])
+		s.debugf("moving backwards by %d", n)
+		if r == '\n' {
+			s.p.Line++
+			s.p.Column = 1
 		} else {
 			s.p.Column++
 		}
@@ -190,6 +218,7 @@ func (s *Scanner) current() (rune, error) {
 	if s.eof() {
 		return 0, io.EOF
 	}
+	s.debugf("getting current character: %s", string(s.input[s.p.Position]))
 	return rune(s.input[s.p.Position]), nil
 }
 
