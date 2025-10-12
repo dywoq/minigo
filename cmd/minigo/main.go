@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/dywoq/minigo/cmd/minigo/scanner"
+	"github.com/dywoq/minigo/pkg/scanner"
 )
 
 func main() {
-	f, err := os.Open("main.dl")
+	f, err := os.Open("./main.dl")
 	if err != nil {
 		panic(err)
 	}

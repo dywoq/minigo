@@ -7,7 +7,7 @@ import (
 	"time"
 	"unicode"
 
-	"github.com/dywoq/minigo/cmd/minigo/token"
+	"github.com/dywoq/minigo/pkg/token"
 )
 
 // Scanner is responsible for scanning the code

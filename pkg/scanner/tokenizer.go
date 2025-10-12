@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"unicode"
 
-	"github.com/dywoq/minigo/cmd/minigo/token"
+	"github.com/dywoq/minigo/pkg/token"
 )
 
 type context interface {
