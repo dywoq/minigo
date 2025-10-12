@@ -28,5 +28,12 @@ go.work.sum
 .env
 
 # Editor/IDE
-# .idea/
-# .vscode/
+.idea/
+
+# Editor/IDE Configuration (Go Minimalist Approach)
+# IGNORE the entire .vscode directory to prevent clutter
+.vscode/**/*
+
+# EXCEPTION: Allow the shared debugging configuration file
+# This is crucial for team consistency and reducing setup time.
+!.vscode/launch.json

@@ -3,6 +3,7 @@ package scanner
 import (
 	"errors"
 	"fmt"
+	"slices"
 	"unicode"
 
 	"github.com/dywoq/minigo/pkg/token"
@@ -84,4 +85,35 @@ func tokenizeNumber(c context) (*token.Token, error) {
 		return nil, err
 	}
 	return c.new(str, token.Integer), nil
+}
+
+func tokenizeKeyword(c context) (*token.Token, error) {
+	str, err := selectWordAndCheck(c, token.Keywords)
+	if err != nil {
+		return nil, err
+	}
+	return c.new(str, token.Keyword), nil
+}
+
+func selectWordAndCheck(c context, collection token.Collection) (string, error) {
+	if r, _ := c.current(); !unicode.IsLetter(r) {
+		return "", errNoMatch
+	}
+	start := c.position().Position
+	for {
+		r, _ := c.current()
+		if c.eof() || !unicode.IsLetter(r) {
+			break
+		}
+		c.advance(1)
+	}
+	str, err := c.slice(start, c.position().Position)
+	if err != nil {
+		return "", err
+	}
+	if !slices.Contains(collection, str) {
+		c.position().Position = start
+		return "", errNoMatch
+	}
+	return str, nil
 }

@@ -44,7 +44,10 @@ func New(r io.Reader) (*Scanner, error) {
 		token.NewPosition(1, 1, 0),
 		debug{},
 		false,
-		[]tokenizer{tokenizeNumber},
+		[]tokenizer{
+			tokenizeNumber,
+			tokenizeKeyword,
+		},
 	}, nil
 }
 
@@ -56,7 +59,10 @@ func NewDebug(r io.Reader, w io.Writer) (*Scanner, error) {
 		r:          r,
 		p:          token.NewPosition(1, 1, 0),
 		scanning:   false,
-		tokenizers: []tokenizer{tokenizeNumber},
+		tokenizers: []tokenizer{
+			tokenizeNumber,
+			tokenizeKeyword,
+		},
 	}
 	s.d = debug{s, w, true}
 	bytes, err := io.ReadAll(r)
