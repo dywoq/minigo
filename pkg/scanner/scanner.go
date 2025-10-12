@@ -111,8 +111,12 @@ func (s *Scanner) Scan() ([]*token.Token, error) {
 	s.scanning = true
 	s.debug("starting scanning")
 	for !s.eof() {
+		s.skipWhitespace()
 		tok, err := s.tokenize()
 		if err != nil {
+			if err == io.EOF {
+				break
+			}
 			return nil, err
 		}
 		if tok.Kind == token.Illegal {
@@ -129,7 +133,6 @@ func (s *Scanner) Scan() ([]*token.Token, error) {
 
 func (s *Scanner) tokenize() (*token.Token, error) {
 	for _, tokenizer := range s.tokenizers {
-		s.skipWhitespace()
 		tok, err := tokenizer(s)
 		if err != nil {
 			if err == errNoMatch {
@@ -145,7 +148,11 @@ func (s *Scanner) tokenize() (*token.Token, error) {
 
 func (s *Scanner) skipWhitespace() {
 	for {
-		if r, _ := s.current(); !unicode.IsSpace(r) || s.eof() {
+		if s.eof() {
+			break
+		}
+		r, _ := s.current()
+		if !unicode.IsSpace(r) {
 			break
 		}
 		s.debug("skipping whitespace")
