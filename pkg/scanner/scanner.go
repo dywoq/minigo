@@ -80,7 +80,7 @@ func NewDebug(r io.Reader, w io.Writer) (*Scanner, error) {
 	return s, nil
 }
 
-// Debug returns the methods that allows you
+// Debug returns the methods that allow you
 // to manage the debugger.
 func (s *Scanner) Debug() debug {
 	return s.d
