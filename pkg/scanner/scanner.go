@@ -56,9 +56,9 @@ func New(r io.Reader) (*Scanner, error) {
 // But you must pass io.Writer for the debugger to write messages.
 func NewDebug(r io.Reader, w io.Writer) (*Scanner, error) {
 	s := &Scanner{
-		r:          r,
-		p:          token.NewPosition(1, 1, 0),
-		scanning:   false,
+		r:        r,
+		p:        token.NewPosition(1, 1, 0),
+		scanning: false,
 		tokenizers: []tokenizer{
 			tokenizeNumber,
 			tokenizeKeyword,
@@ -100,6 +100,7 @@ func (s *Scanner) SetReader(r io.Reader) error {
 func (s *Scanner) Scan() ([]*token.Token, error) {
 	result := []*token.Token{}
 	for !s.eof() {
+		s.scanning = true
 		for _, tokenizer := range s.tokenizers {
 			s.skipWhitespace()
 			tok, err := tokenizer(s)
@@ -114,6 +115,7 @@ func (s *Scanner) Scan() ([]*token.Token, error) {
 		}
 	}
 	result = append(result, token.NewToken("", token.Eof, s.p))
+	s.scanning = false
 	return result, nil
 }
 
@@ -194,8 +196,13 @@ func (s *Scanner) position() *token.Position {
 }
 
 // Set turns on the debugging mode.
-func (d *debug) Set(b bool) {
+// Returns ErrWorking if the scanner is working right now.
+func (d *debug) Set(b bool) error {
+	if d.s.scanning {
+		return ErrWorking
+	}
 	d.on = b
+	return nil
 }
 
 // On returns true if the debugging mode is on.
@@ -204,6 +211,11 @@ func (d *debug) On() bool {
 }
 
 // SetWriter sets a instance that implements io.Writer interface.
-func (d *debug) SetWriter(w io.Writer) {
+// Returns ErrWorking if the scanner is working right now.
+func (d *debug) SetWriter(w io.Writer) error {
+	if d.s.scanning {
+		return ErrWorking
+	}
 	d.w = w
+	return nil
 }
