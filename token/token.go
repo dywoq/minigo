@@ -16,8 +16,9 @@ type Collection []string
 // Position represents the token position.
 // It should be used as a pointer to provide correct position information.
 type Position struct {
-	Line   int `json:"line"`
-	Column int `json:"column"`
+	Line     int `json:"line"`
+	Column   int `json:"column"`
+	Position int `json:"position"`
 }
 
 // Token is a stream of characters,
@@ -34,8 +35,8 @@ func NewToken(literal string, kind Kind, position *Position) *Token {
 }
 
 // NewPosition returns a pointer to Position struct.
-func NewPosition(line int, column int) *Position {
-	return &Position{line, column}
+func NewPosition(line int, column int, position int) *Position {
+	return &Position{line, column, position}
 }
 
 // A token kind.
@@ -46,14 +47,16 @@ var (
 	Type       Kind = "type"
 	Keyword    Kind = "keyword"
 	Separator  Kind = "separator"
+	Eof        Kind = "eof"
+	Illegal    Kind = "illegal"
 )
 
 // IsType reports whether value is a valid type.
 // The valid types are:
-//  "int", "string", "bool", "error", "float", "rune", "any"
+//  "int", "string", "bool", "float", "rune", "any"
 func IsType(value string) bool {
 	switch value {
-	case "int", "string", "bool", "error", "float", "rune":
+	case "int", "string", "bool", "float", "rune":
 		return true
 	}
 	return false
