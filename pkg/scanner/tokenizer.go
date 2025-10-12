@@ -103,6 +103,36 @@ func tokenizeType(c context) (*token.Token, error) {
 	return c.new(str, token.Type), nil
 }
 
+func tokenizeSeparator(c context) (*token.Token, error) {
+	start := c.position().Position
+	multiChars := []string{"...", "//"}
+	for _, sep := range multiChars {
+		end := start + len(sep)
+		str, err := c.slice(start, end)
+		if err != nil {
+			continue
+		}
+		if slices.Contains(token.Separators, str) {
+			c.advance(len(sep))
+			return c.new(str, token.Separator), nil
+		}
+	}
+	_, err := c.current()
+	if err != nil {
+		return nil, err
+	}
+	str, err := c.slice(start, start+1)
+	if err != nil {
+		return nil, err
+	}
+
+	if slices.Contains(token.Separators, str) {
+		c.advance(1)
+		return c.new(str, token.Separator), nil
+	}
+	return nil, errNoMatch
+}
+
 func selectWordAndCheck(c context, collection token.Collection) (string, error) {
 	if r, _ := c.current(); !unicode.IsLetter(r) {
 		return "", errNoMatch
@@ -120,7 +150,7 @@ func selectWordAndCheck(c context, collection token.Collection) (string, error) 
 		return "", err
 	}
 	if !slices.Contains(collection, str) {
-		c.backwards(c.position().Position)
+		c.backwards(start)
 		return "", errNoMatch
 	}
 	return str, nil

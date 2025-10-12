@@ -35,6 +35,7 @@ var defaultTokenizers = []tokenizer{
 	tokenizeType,
 	tokenizeNumber,
 	tokenizeKeyword,
+	tokenizeSeparator,
 }
 
 // New returns a pointer to Scanner with the given io.Reader instance.
@@ -124,6 +125,7 @@ func (s *Scanner) Scan() ([]*token.Token, error) {
 			return nil, fmt.Errorf("met illegal character: %s", string(r))
 		}
 		result = append(result, tok)
+		s.debugf("tokenized: %s", tok.Literal)
 	}
 	result = append(result, token.NewToken("", token.Eof, s.p))
 	s.debug("ending scanning")
