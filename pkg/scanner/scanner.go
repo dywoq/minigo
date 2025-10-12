@@ -28,7 +28,7 @@ type debug struct {
 }
 
 var (
-	ErrWorking = errors.New("scanner is working")
+	ErrWorking = errors.New("scanner: scanning right now")
 )
 
 // New returns a pointer to Scanner with the given io.Reader instance.
@@ -85,6 +85,9 @@ func (s *Scanner) Debug() debug {
 func (s *Scanner) SetReader(r io.Reader) error {
 	if s.scanning {
 		return ErrWorking
+	}
+	if r == nil {
+		return errors.New("scanner: given io.Reader is nil")
 	}
 	bytes, err := io.ReadAll(r)
 	if err != nil {
@@ -215,6 +218,9 @@ func (d *debug) On() bool {
 func (d *debug) SetWriter(w io.Writer) error {
 	if d.s.scanning {
 		return ErrWorking
+	}
+	if w == nil {
+		return errors.New("debug: given io.Writer is nil")
 	}
 	d.w = w
 	return nil
