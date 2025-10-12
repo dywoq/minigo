@@ -27,9 +27,15 @@ type debug struct {
 	on bool
 }
 
-var (
-	ErrWorking = errors.New("scanner: scanning right now")
-)
+// ErrWorking means the scanner is currently working,
+// and you can't change the reader and writer.
+var ErrWorking = errors.New("scanner: scanning right now")
+
+var defaultTokenizers = []tokenizer{
+	tokenizeType,
+	tokenizeNumber,
+	tokenizeKeyword,
+}
 
 // New returns a pointer to Scanner with the given io.Reader instance.
 // If something fails, the function returns nil and an error.
@@ -47,10 +53,7 @@ func New(r io.Reader) (*Scanner, error) {
 		token.NewPosition(1, 1, 0),
 		debug{},
 		false,
-		[]tokenizer{
-			tokenizeNumber,
-			tokenizeKeyword,
-		},
+		defaultTokenizers,
 	}, nil
 }
 
@@ -62,13 +65,10 @@ func NewDebug(r io.Reader, w io.Writer) (*Scanner, error) {
 		return nil, errors.New("given io.Reader or io.Writer is nil")
 	}
 	s := &Scanner{
-		r:        r,
-		p:        token.NewPosition(1, 1, 0),
-		scanning: false,
-		tokenizers: []tokenizer{
-			tokenizeNumber,
-			tokenizeKeyword,
-		},
+		r:          r,
+		p:          token.NewPosition(1, 1, 0),
+		scanning:   false,
+		tokenizers: defaultTokenizers,
 	}
 	s.d = debug{s, w, true}
 	bytes, err := io.ReadAll(r)

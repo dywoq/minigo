@@ -95,6 +95,14 @@ func tokenizeKeyword(c context) (*token.Token, error) {
 	return c.new(str, token.Keyword), nil
 }
 
+func tokenizeType(c context) (*token.Token, error) {
+	str, err := selectWordAndCheck(c, token.Types)
+	if err != nil {
+		return nil, err
+	}
+	return c.new(str, token.Type), nil
+}
+
 func selectWordAndCheck(c context, collection token.Collection) (string, error) {
 	if r, _ := c.current(); !unicode.IsLetter(r) {
 		return "", errNoMatch
