@@ -79,7 +79,7 @@ func tokenizeNumber(c context) (*token.Token, error) {
 		return c.new(str, token.Float), nil
 	}
 
-	str, err := c.slice(start, c.position().Position-1)
+	str, err := c.slice(start, c.position().Position)
 	if err != nil {
 		return nil, err
 	}

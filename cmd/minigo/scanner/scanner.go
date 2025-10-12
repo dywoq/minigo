@@ -100,6 +100,7 @@ func (s *Scanner) Scan() ([]*token.Token, error) {
 			if err != nil {
 				if err == errNoMatch {
 					s.debug("got errNoMatch, trying other tokenizer")
+					continue
 				}
 				return nil, err
 			}
@@ -112,10 +113,10 @@ func (s *Scanner) Scan() ([]*token.Token, error) {
 
 func (s *Scanner) skipWhitespace() {
 	for {
-		s.advance(1)
 		if r, _ := s.current(); !unicode.IsSpace(r) {
 			break
 		}
+		s.advance(1)
 	}
 }
 
