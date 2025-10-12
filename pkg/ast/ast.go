@@ -38,6 +38,7 @@ type Variable struct {
 type Function struct {
 	Literal   Node               `json:"literal"`
 	Arguments []FunctionArgument `json:"arguments"`
+	Exported  bool               `json:"exported"`
 }
 
 // FunctionArgument presentation in code:
@@ -53,7 +54,28 @@ type FunctionArgument struct {
 	Variadic   bool       `json:"variadic"`
 }
 
+// Call presentation in code:
+//
+//  print("Hi!", 10, 23)
+type Call struct {
+	Identifier string         `json:"identifier"`
+	Arguments  []CallArgument `json:"arguments"`
+}
+
+// CallArgument presentation in code:
+//
+//  print("Hi!")
+//  //     ^
+//  //     |
+//  //   The call argument
+type CallArgument struct {
+	Type  token.Kind `json:"type"`
+	Value string     `json:"value"`
+}
+
 func (Value) node()            {}
 func (Variable) node()         {}
 func (Function) node()         {}
 func (FunctionArgument) node() {}
+func (Call) node()             {}
+func (CallArgument) node()     {}
