@@ -34,6 +34,9 @@ var (
 // New returns a pointer to Scanner with the given io.Reader instance.
 // If something fails, the function returns nil and an error.
 func New(r io.Reader) (*Scanner, error) {
+	if r == nil {
+		return nil, errors.New("given io.Reader is nil")
+	}
 	bytes, err := io.ReadAll(r)
 	if err != nil {
 		return nil, err
@@ -55,6 +58,9 @@ func New(r io.Reader) (*Scanner, error) {
 // the only difference from New is that the debugger is automatically on.
 // But you must pass io.Writer for the debugger to write messages.
 func NewDebug(r io.Reader, w io.Writer) (*Scanner, error) {
+	if r == nil || w == nil {
+		return nil, errors.New("given io.Reader or io.Writer is nil")
+	}
 	s := &Scanner{
 		r:        r,
 		p:        token.NewPosition(1, 1, 0),
@@ -102,24 +108,37 @@ func (s *Scanner) SetReader(r io.Reader) error {
 // Scan tries other tokenizer.
 func (s *Scanner) Scan() ([]*token.Token, error) {
 	result := []*token.Token{}
+	s.scanning = true
 	for !s.eof() {
-		s.scanning = true
-		for _, tokenizer := range s.tokenizers {
-			s.skipWhitespace()
-			tok, err := tokenizer(s)
-			if err != nil {
-				if err == errNoMatch {
-					s.debug("got errNoMatch, trying other tokenizer")
-					continue
-				}
-				return nil, err
-			}
-			result = append(result, tok)
+		tok, err := s.tokenize()
+		if err != nil {
+			return nil, err
 		}
+		if tok.Kind == token.Illegal {
+			r, _ := s.current()
+			return nil, fmt.Errorf("met illegal character: %s", string(r))
+		}
+		result = append(result, tok)
 	}
 	result = append(result, token.NewToken("", token.Eof, s.p))
 	s.scanning = false
 	return result, nil
+}
+
+func (s *Scanner) tokenize() (*token.Token, error) {
+	for _, tokenizer := range s.tokenizers {
+		s.skipWhitespace()
+		tok, err := tokenizer(s)
+		if err != nil {
+			if err == errNoMatch {
+				s.debug("got errNoMatch, trying other tokenizer")
+				continue
+			}
+			return nil, err
+		}
+		return tok, nil
+	}
+	return s.new("", token.Illegal), nil
 }
 
 func (s *Scanner) skipWhitespace() {
