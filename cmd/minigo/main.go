@@ -23,6 +23,6 @@ func main() {
 	}
 
 	for _, token := range tokens {
-		fmt.Printf("%s %s\n", token.Literal, token.Kind)
+		fmt.Printf("%s %s %v\n", token.Literal, token.Kind, token.Position)
 	}
 }

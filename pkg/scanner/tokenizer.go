@@ -150,7 +150,7 @@ func selectWordAndCheck(c context, collection token.Collection) (string, error) 
 		return "", err
 	}
 	if !slices.Contains(collection, str) {
-		c.backwards(start)
+		c.backwards(c.position().Position - start)
 		return "", errNoMatch
 	}
 	return str, nil
