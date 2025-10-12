@@ -51,41 +51,48 @@ var (
 	Illegal    Kind = "illegal"
 )
 
-// IsType reports whether value is a valid type.
-// The valid types are:
-//  "int", "string", "bool", "float", "rune", "any"
-func IsType(value string) bool {
-	switch value {
-	case "int", "string", "bool", "float", "rune":
-		return true
+// A collection of reserved words.
+var (
+	Keywords Collection = Collection{
+		"const",
+		"func",
+		"import",
+		"package",
+		"type",
+		"var",
+		"map",
+		"break",
+		"case",
+		"continue",
+		"default",
+		"else",
+		"for",
+		"if",
+		"range",
+		"return",
+		"switch",
 	}
-	return false
-}
 
-// IsSeparator reports whether value is a valid separator.
-// The valid separators are:
-//  ",", ";", "*", "(", ")", "[", "]", "{", "}", "...", ".", "//"
-func IsSeparator(value string) bool {
-	switch value {
-	case ",", ";", "*", "(", ")", "[", "]", "{", "}", "...", ".", "//":
-		return true
+	Separators Collection = Collection{
+		",",
+		";",
+		"*",
+		"(",
+		")",
+		"[",
+		"]",
+		"{",
+		"}",
+		"...",
+		".",
+		"//",
 	}
-	return false
-}
 
-// IsKeyword reports whether value is a valid keyword.
-// The valid keywords are:
-//  "const", "func", "import", "package", "type", "var",
-//  "map", "break", "case", "continue", "default",
-//  "else", "for", "if", "range", "return",
-//	"switch",
-func IsKeyword(value string) bool {
-	switch value {
-	case "const", "func", "import", "package", "type", "var",
-		"map", "break", "case", "continue", "default",
-		"else", "for", "if", "range", "return",
-		"switch":
-		return true
+	Types Collection = Collection{
+		"int",
+		"string",
+		"bool",
+		"float",
+		"rune",
 	}
-	return false
-}
+)
