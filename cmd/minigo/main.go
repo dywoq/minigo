@@ -28,7 +28,7 @@ func main() {
 		fmt.Printf("%s %s %v\n", token.Literal, token.Kind, token.Position)
 	}
 
-	p, err := parser.NewParser(tokens)
+	p, err := parser.NewDebug(tokens, os.Stdout)
 	if err != nil {
 		panic(err)
 	}

@@ -32,15 +32,30 @@ type debug struct {
 	w  io.Writer
 }
 
-// NewParser returns a pointer to Parser with the debug automatically turned off.
-func NewParser(tokens []*token.Token) (*Parser, error) {
-	return &Parser{
+// New returns a pointer to Parser with the debug automatically turned off.
+// Notice that the debug writer is nil.
+func New(tokens []*token.Token) (*Parser, error) {
+	p := &Parser{
 		tokens:  tokens,
 		pos:     0,
 		parsing: false,
-		d:       debug{},
 		mini:    miniParsers,
-	}, nil
+	}
+	p.d = debug{p: p, on: false, w: nil}
+	return p, nil
+}
+
+// NewDebug returns a pointer to Parser with the debug automatically turned on.
+// w writer is used by the debugger.
+func NewDebug(tokens []*token.Token, w io.Writer) (*Parser, error) {
+	p := &Parser{
+		tokens:  tokens,
+		pos:     0,
+		parsing: false,
+		mini:    miniParsers,
+	}
+	p.d = debug{p: p, on: true, w: w}
+	return p, nil
 }
 
 // Debug returns the methods that allow you
@@ -66,6 +81,13 @@ func (p *Parser) SetTokens(t []*token.Token) error {
 // Parse parses the given tokens.
 // Returns ast.File node with the set statements.
 func (p *Parser) Parse() (ast.File, error) {
+	p.d.p.parsing = true
+	p.debug("starting parsing")
+	defer func() {
+		p.d.p.parsing = false
+		p.debug("ending parsing")
+	}()
+
 	f := ast.File{}
 	for !p.eof() {
 		t := p.current()
@@ -78,6 +100,7 @@ func (p *Parser) Parse() (ast.File, error) {
 				return ast.File{}, err
 			}
 			f.Statements = append(f.Statements, r)
+			p.debugf("parsed node at %v", p.pos)
 		}
 	}
 	return f, nil
@@ -88,6 +111,7 @@ func (p *Parser) advance(n int) error {
 		return errors.New("p.pos+n is overflow")
 	}
 	p.pos += n
+	p.debugf("advancing by %d", n)
 	return nil
 }
 
@@ -99,6 +123,7 @@ func (p *Parser) current() *token.Token {
 	if p.eof() {
 		return nil
 	}
+	p.debug("getting current token")
 	return p.tokens[p.pos]
 }
 
@@ -120,6 +145,7 @@ func (p *Parser) debugf(format string, v ...any) error {
 
 func (p *Parser) expectLiteral(literal string) (*token.Token, error) {
 	t := p.current()
+	p.debugf("expect literal \"%s\"...", literal)
 	if t.Literal != literal {
 		return nil, &expectError{
 			got:      t,
@@ -133,11 +159,10 @@ func (p *Parser) expectLiteral(literal string) (*token.Token, error) {
 
 func (p *Parser) expectLiterals(literals ...string) (*token.Token, error) {
 	t := p.current()
-	for _, literal := range literals {
-		if t.Literal == literal {
-			p.advance(1)
-			return t, nil
-		}
+	p.debugf("expect literals %v...", literals)
+	if slices.Contains(literals, t.Literal) {
+		p.advance(1)
+		return t, nil
 	}
 	return nil, &expectError{
 		got:      t,
@@ -148,6 +173,7 @@ func (p *Parser) expectLiterals(literals ...string) (*token.Token, error) {
 
 func (p *Parser) expectKind(kind token.Kind) (*token.Token, error) {
 	t := p.current()
+	p.debugf("expect kind \"%s\"...", kind)
 	if t.Kind != kind {
 		return nil, &expectError{
 			got:      t,
@@ -161,6 +187,7 @@ func (p *Parser) expectKind(kind token.Kind) (*token.Token, error) {
 
 func (p *Parser) expectKinds(kinds ...token.Kind) (*token.Token, error) {
 	t := p.current()
+	p.debugf("expect kind %v...", kinds)
 	if slices.Contains(kinds, t.Kind) {
 		p.advance(1)
 		return t, nil

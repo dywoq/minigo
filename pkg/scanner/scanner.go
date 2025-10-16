@@ -113,6 +113,11 @@ func (s *Scanner) Scan() ([]*token.Token, error) {
 	result := []*token.Token{}
 	s.scanning = true
 	s.debug("starting scanning")
+	defer func() {
+		s.debug("ending scanning")
+		s.scanning = false
+	}()
+
 	for !s.eof() {
 		s.skipWhitespace()
 		tok, err := s.tokenize()
@@ -130,8 +135,6 @@ func (s *Scanner) Scan() ([]*token.Token, error) {
 		s.debugf("tokenized: %s", tok.Literal)
 	}
 	result = append(result, token.NewToken("", token.Eof, s.p))
-	s.debug("ending scanning")
-	s.scanning = false
 	return result, nil
 }
 
