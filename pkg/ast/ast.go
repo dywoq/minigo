@@ -28,9 +28,10 @@ type Value struct {
 //
 //  z := "Goodbye!"
 type Variable struct {
-	Name  string `json:"name"`
-	Value Node   `json:"value"`
-	Type  Type   `json:"type"`
+	Name     string `json:"name"`
+	Type     Type   `json:"type"`
+	Exported bool   `json:"exported"`
+	Value    Node   `json:"value"`
 }
 
 // Function presentation in code:
@@ -75,7 +76,7 @@ type Call struct {
 //  //   The call argument
 type CallArgument struct {
 	Type  token.Kind `json:"type"`
-	Value string     `json:"value"`
+	Value Node       `json:"value"`
 }
 
 // FunctionValue presentation in code:
@@ -120,6 +121,7 @@ const (
 	TypeInteger      Type = "integer"
 	TypeFloat        Type = "float"
 	TypeOfIdentifier Type = "of-identifier"
+	TypeOfConversion Type = "of-conversion"
 	TypeUnknown      Type = "unknown"
 )
 
@@ -133,6 +135,8 @@ func TypeFromKind(t token.Kind) Type {
 		return TypeString
 	case token.Identifier:
 		return TypeOfIdentifier
+	case token.Type:
+		return TypeOfConversion
 	}
 	return TypeUnknown
 }

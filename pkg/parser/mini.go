@@ -3,6 +3,7 @@ package parser
 import (
 	"fmt"
 	"slices"
+	"unicode"
 
 	"github.com/dywoq/minigo/pkg/ast"
 	"github.com/dywoq/minigo/pkg/token"
@@ -66,6 +67,7 @@ func parseDeclaration(c context) (ast.Node, error) {
 }
 
 func parseVariable(name string, c context) (ast.Node, error) {
+	exported := false
 	_, err := c.expectLiteral(":=")
 	if err != nil {
 		return nil, err
@@ -74,10 +76,16 @@ func parseVariable(name string, c context) (ast.Node, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	if unicode.IsUpper(rune(name[0])) {
+		exported = true
+	}
+
 	return ast.Variable{
-		Name:  name,
-		Type:  ast.TypeFromKind(kind),
-		Value: val,
+		Name:     name,
+		Type:     ast.TypeFromKind(kind),
+		Value:    val,
+		Exported: exported,
 	}, nil
 }
 
@@ -102,8 +110,37 @@ func parseValue(c context) (ast.Node, token.Kind, error) {
 			bin.HasParens = true
 			return bin, kind, nil
 		}
-
 		return expr, kind, nil
+	}
+
+	if t.Literal == "func" {
+		node, err := parseFunctionValue(c)
+		if err != nil {
+			return nil, token.Illegal, err
+		}
+		return node, token.Identifier, nil
+	}
+
+	if t.Literal == "func" {
+		c.advance(1)
+
+		args, err := parseFunctionArgumentsDeclaration(c)
+		if err != nil {
+			return nil, token.Illegal, err
+		}
+
+		retType := parseFunctionReturnTypeDeclaration(c)
+
+		body, err := parseFunctionBodyDeclaration(c)
+		if err != nil {
+			return nil, token.Illegal, err
+		}
+
+		return ast.FunctionValue{
+			Arguments:  args,
+			ReturnType: retType,
+			Body:       body,
+		}, token.Identifier, nil
 	}
 
 	switch t.Kind {
@@ -113,28 +150,22 @@ func parseValue(c context) (ast.Node, token.Kind, error) {
 
 	case token.Type, token.Identifier:
 		next := c.peek(1)
-		if next != nil && next.Literal == "(" {
-			to, err := c.expectKinds(token.Type, token.Identifier)
+		if next != nil && next.Literal == "(" && t.Kind == token.Identifier {
+			node, err := parseFunctionCall(c)
 			if err != nil {
 				return nil, token.Illegal, err
 			}
-			_, err = c.expectLiteral("(")
-			if err != nil {
-				return nil, token.Illegal, err
-			}
-			val, _, err := parseValue(c)
-			if err != nil {
-				return nil, token.Illegal, err
-			}
-			_, err = c.expectLiteral(")")
-			if err != nil {
-				return nil, token.Illegal, err
-			}
-			return ast.TypeConversion{
-				To:    to.Literal,
-				Value: val,
-			}, t.Kind, nil
+			return node, token.Identifier, nil
 		}
+
+		if next != nil && next.Literal == "(" && t.Kind == token.Type {
+			node, err := parseTypeConversion(c)
+			if err != nil {
+				return nil, token.Illegal, err
+			}
+			return node, token.Type, nil
+		}
+
 		c.advance(1)
 		return ast.Value{Value: t.Literal}, t.Kind, nil
 	}
@@ -195,16 +226,80 @@ func parseFunction(c context) (ast.Node, error) {
 	if err != nil {
 		return nil, err
 	}
-	name := nameToken.Literal
 
-	_, err = c.expectLiteral("(")
+	exported := false
+
+	name := nameToken.Literal
+	if unicode.IsUpper(rune(name[0])) {
+		exported = true
+	}
+
+	args, err := parseFunctionArgumentsDeclaration(c)
 	if err != nil {
 		return nil, err
 	}
 
+	retType := parseFunctionReturnTypeDeclaration(c)
+
+	body, err := parseFunctionBodyDeclaration(c)
+	if err != nil {
+		panic(err)
+	}
+
+	return ast.Function{
+		Name:       name,
+		ReturnType: retType,
+		Arguments:  args,
+		Body:       body,
+		Exported:   exported,
+	}, nil
+}
+
+func parseFunctionCall(c context) (ast.Node, error) {
+	fnToken, err := c.expectKind(token.Identifier)
+	if err != nil {
+		return nil, err
+	}
+	fnName := fnToken.Literal
+	_, err = c.expectLiteral("(")
+	if err != nil {
+		return nil, err
+	}
+	var args []ast.CallArgument
+	for !c.eof() && c.current().Literal != ")" {
+		val, kind, err := parseExpression(c, 0)
+		if err != nil {
+			return nil, err
+		}
+
+		args = append(args, ast.CallArgument{
+			Type:  kind,
+			Value: val,
+		})
+
+		if c.current().Literal == "," {
+			c.advance(1)
+		} else {
+			break
+		}
+	}
+	_, err = c.expectLiteral(")")
+	if err != nil {
+		return nil, err
+	}
+	return ast.Call{
+		Identifier: fnName,
+		Arguments:  args,
+	}, nil
+}
+
+func parseFunctionArgumentsDeclaration(c context) ([]ast.FunctionArgument, error) {
+	_, err := c.expectLiteral("(")
+	if err != nil {
+		return nil, err
+	}
 	var args []ast.FunctionArgument
 	var variadicSeen bool
-
 	for !c.eof() && c.current().Literal != ")" {
 		argNameToken, err := c.expectKind(token.Identifier)
 		if err != nil {
@@ -238,12 +333,14 @@ func parseFunction(c context) (ast.Node, error) {
 			c.advance(1)
 		}
 	}
-
 	_, err = c.expectLiteral(")")
 	if err != nil {
 		return nil, err
 	}
+	return args, nil
+}
 
+func parseFunctionReturnTypeDeclaration(c context) string {
 	retType := ""
 	if !c.eof() && c.current().Literal != "{" {
 		tok := c.current()
@@ -252,8 +349,11 @@ func parseFunction(c context) (ast.Node, error) {
 			c.advance(1)
 		}
 	}
+	return retType
+}
 
-	_, err = c.expectLiteral("{")
+func parseFunctionBodyDeclaration(c context) ([]ast.Node, error) {
+	_, err := c.expectLiteral("{")
 	if err != nil {
 		return nil, err
 	}
@@ -275,10 +375,58 @@ func parseFunction(c context) (ast.Node, error) {
 		return nil, err
 	}
 
-	return ast.Function{
-		Name:       name,
-		ReturnType: retType,
+	return body, nil
+}
+
+func parseFunctionValue(c context) (ast.Node, error) {
+	_, err := c.expectLiteral("func")
+	if err != nil {
+		return nil, err
+	}
+
+	args, err := parseFunctionArgumentsDeclaration(c)
+	if err != nil {
+		return nil, err
+	}
+
+	retType := parseFunctionReturnTypeDeclaration(c)
+
+	body, err := parseFunctionBodyDeclaration(c)
+	if err != nil {
+		return nil, err
+	}
+
+	return ast.FunctionValue{
 		Arguments:  args,
+		ReturnType: retType,
 		Body:       body,
+	}, nil
+}
+
+func parseTypeConversion(c context) (ast.Node, error) {
+	toToken, err := c.expectKind(token.Type)
+	if err != nil {
+		return nil, err
+	}
+	to := toToken.Literal
+
+	_, err = c.expectLiteral("(")
+	if err != nil {
+		return nil, err
+	}
+
+	val, _, err := parseValue(c)
+	if err != nil {
+		return nil, err
+	}
+
+	_, err = c.expectLiteral(")")
+	if err != nil {
+		return nil, err
+	}
+
+	return ast.TypeConversion{
+		To:    to,
+		Value: val,
 	}, nil
 }

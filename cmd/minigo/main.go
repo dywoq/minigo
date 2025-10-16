@@ -38,11 +38,9 @@ func main() {
 		panic(err)
 	}
 
-	for _, statement := range file.Statements {
-		content, err := json.MarshalIndent(statement, "", "   ")
-		if err != nil {
-			panic(err)
-		}
-		fmt.Printf("statement: %v\n", string(content))
+	content, err := json.MarshalIndent(file, "| node |", "  ")
+	if err != nil {
+		panic(err)
 	}
+	fmt.Printf("ast: %v\n", string(content))
 }

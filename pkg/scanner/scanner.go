@@ -33,9 +33,9 @@ var ErrWorking = errors.New("scanner: scanning right now")
 
 var defaultTokenizers = []tokenizer{
 	tokenizeBinaryOperator,
-	tokenizeIdentifier,
 	tokenizeKeyword,
 	tokenizeType,
+	tokenizeIdentifier,
 	tokenizeNumber,
 	tokenizeSeparator,
 	tokenizeString,
