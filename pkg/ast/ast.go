@@ -97,6 +97,18 @@ type TypeConversion struct {
 	Value Node   `json:"value"`
 }
 
+// BinaryExpression presentation in code:
+//
+//  			2 + 3
+//  //  Left -- ^ ^ ^ -- Right
+//  //            |
+//  //     Binary expression
+type BinaryExpression struct {
+	Left     Node   `json:"left"`
+	Operator string `json:"operator"`
+	Right    Node   `json:"right"`
+}
+
 // File represents the whole parsed file with node statements.
 type File struct {
 	Statements []Node `json:"statements"`

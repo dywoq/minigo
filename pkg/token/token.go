@@ -47,15 +47,16 @@ func NewPosition(line int, column int, position int) *Position {
 
 // A token kind.
 var (
-	Identifier Kind = "identifier"
-	Integer    Kind = "integer"
-	Float      Kind = "float"
-	Type       Kind = "type"
-	Keyword    Kind = "keyword"
-	Separator  Kind = "separator"
-	String     Kind = "string"
-	Eof        Kind = "eof"
-	Illegal    Kind = "illegal"
+	Identifier     Kind = "identifier"
+	Integer        Kind = "integer"
+	Float          Kind = "float"
+	Type           Kind = "type"
+	Keyword        Kind = "keyword"
+	Separator      Kind = "separator"
+	String         Kind = "string"
+	BinaryOperator Kind = "binary-operator"
+	Eof            Kind = "eof"
+	Illegal        Kind = "illegal"
 )
 
 // A collection of reserved words.
@@ -103,6 +104,13 @@ var (
 		"bool",
 		"float",
 		"rune",
+	}
+
+	BinaryOperators Collection = Collection{
+		"+",
+		"-",
+		"/",
+		"*",
 	}
 )
 

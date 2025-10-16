@@ -189,6 +189,17 @@ func tokenizeString(c context) (*token.Token, error) {
 	return c.new(str, token.String), nil
 }
 
+func tokenizeBinaryOperator(c context) (*token.Token, error) {
+	r, _ := c.current()
+	switch {
+	case slices.Contains(token.BinaryOperators, string(r)):
+		c.advance(1)
+		return c.new(string(r), token.BinaryOperator), nil
+	default:
+		return nil, errNoMatch
+	}
+}
+
 func selectWordAndCheck(c context, collection token.Collection) (string, error) {
 	if r, _ := c.current(); !unicode.IsLetter(r) {
 		return "", errNoMatch
