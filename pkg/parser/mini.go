@@ -2,6 +2,7 @@ package parser
 
 import (
 	"fmt"
+	"slices"
 
 	"github.com/dywoq/minigo/pkg/ast"
 	"github.com/dywoq/minigo/pkg/token"
@@ -62,7 +63,7 @@ func parseVariable(name string, c context) (ast.Node, error) {
 	if err != nil {
 		return nil, err
 	}
-	val, kind, err := parseValue(c)
+	val, kind, err := parseExpression(c, 0)
 	if err != nil {
 		return nil, err
 	}
@@ -77,6 +78,25 @@ func parseValue(c context) (ast.Node, token.Kind, error) {
 	t := c.current()
 	if t == nil {
 		return nil, token.Illegal, fmt.Errorf("unexpected EOF in value")
+	}
+
+	if t.Literal == "(" {
+		c.advance(1)
+		expr, kind, err := parseExpression(c, 0)
+		if err != nil {
+			return nil, token.Illegal, err
+		}
+		_, err = c.expectLiteral(")")
+		if err != nil {
+			return nil, token.Illegal, err
+		}
+
+		if bin, ok := expr.(ast.BinaryExpression); ok {
+			bin.HasParens = true
+			return bin, kind, nil
+		}
+
+		return expr, kind, nil
 	}
 
 	switch t.Kind {
@@ -113,4 +133,47 @@ func parseValue(c context) (ast.Node, token.Kind, error) {
 	}
 
 	return nil, token.Illegal, fmt.Errorf("unknown value: %v", t)
+}
+
+var precedence = map[string]int{
+	"+": 1,
+	"-": 1,
+	"*": 2,
+	"/": 2,
+}
+
+func parseExpression(c context, minPrec int) (ast.Node, token.Kind, error) {
+	left, kind, err := parseValue(c)
+	if err != nil {
+		return nil, token.Illegal, err
+	}
+
+	for {
+		t := c.current()
+		if t == nil || !slices.Contains(token.BinaryOperators, t.Literal) {
+			break
+		}
+
+		opPrec := precedence[t.Literal]
+		if opPrec < minPrec {
+			break
+		}
+
+		op := t.Literal
+		c.advance(1)
+
+		right, rKind, err := parseExpression(c, opPrec+1)
+		if err != nil {
+			return nil, token.Illegal, err
+		}
+
+		left = ast.BinaryExpression{
+			Left:     left,
+			Operator: op,
+			Right:    right,
+		}
+		kind = rKind
+	}
+
+	return left, kind, nil
 }

@@ -28,7 +28,7 @@ type Value struct {
 //
 //  z := "Goodbye!"
 type Variable struct {
-	Name  string `json:"string"`
+	Name  string `json:"name"`
 	Value Node   `json:"value"`
 	Type  Type   `json:"type"`
 }
@@ -104,9 +104,10 @@ type TypeConversion struct {
 //  //            |
 //  //     Binary expression
 type BinaryExpression struct {
-	Left     Node   `json:"left"`
-	Operator string `json:"operator"`
-	Right    Node   `json:"right"`
+	Operator  string `json:"operator"`
+	HasParens bool   `json:"has_parens"`
+	Left      Node   `json:"left"`
+	Right     Node   `json:"right"`
 }
 
 // File represents the whole parsed file with node statements.
@@ -145,3 +146,4 @@ func (CallArgument) node()     {}
 func (FunctionValue) node()    {}
 func (File) node()             {}
 func (TypeConversion) node()   {}
+func (BinaryExpression) node() {}
