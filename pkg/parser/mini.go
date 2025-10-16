@@ -45,7 +45,8 @@ func parseDeclaration(c context) (ast.Node, error) {
 		return nil, fmt.Errorf("unexpected EOF")
 	}
 
-	if t.Kind == token.Identifier {
+	switch t.Kind {
+	case token.Identifier:
 		next := c.peek(1)
 		if next != nil && next.Literal == ":=" {
 			name := t.Literal
@@ -53,6 +54,12 @@ func parseDeclaration(c context) (ast.Node, error) {
 			return parseVariable(name, c)
 		}
 		return nil, fmt.Errorf("unexpected identifier without := at %v", t.Position)
+
+	case token.Keyword:
+		if t.Literal == "func" {
+			return parseFunction(c)
+		}
+		return nil, fmt.Errorf("unexpected keyword %q at %v", t.Literal, t.Position)
 	}
 
 	return nil, fmt.Errorf("unexpected declaration start: %v", t)
@@ -176,4 +183,102 @@ func parseExpression(c context, minPrec int) (ast.Node, token.Kind, error) {
 	}
 
 	return left, kind, nil
+}
+
+func parseFunction(c context) (ast.Node, error) {
+	_, err := c.expectLiteral("func")
+	if err != nil {
+		return nil, err
+	}
+
+	nameToken, err := c.expectKind(token.Identifier)
+	if err != nil {
+		return nil, err
+	}
+	name := nameToken.Literal
+
+	_, err = c.expectLiteral("(")
+	if err != nil {
+		return nil, err
+	}
+
+	var args []ast.FunctionArgument
+	var variadicSeen bool
+
+	for !c.eof() && c.current().Literal != ")" {
+		argNameToken, err := c.expectKind(token.Identifier)
+		if err != nil {
+			return nil, err
+		}
+		isVariadic := false
+		if c.current().Literal == "..." {
+			if variadicSeen {
+				return nil, fmt.Errorf("only one variadic parameter allowed")
+			}
+			isVariadic = true
+			variadicSeen = true
+			c.advance(1)
+		}
+		argTypeToken, err := c.expectKinds(token.Type, token.Identifier)
+		if err != nil {
+			return nil, err
+		}
+
+		arg := ast.FunctionArgument{
+			Identifier: argNameToken.Literal,
+			Type:       argTypeToken.Kind,
+			Variadic:   isVariadic,
+		}
+		args = append(args, arg)
+		if variadicSeen && c.current().Literal == "," {
+			return nil, fmt.Errorf("variadic parameter must be last")
+		}
+
+		if c.current().Literal == "," {
+			c.advance(1)
+		}
+	}
+
+	_, err = c.expectLiteral(")")
+	if err != nil {
+		return nil, err
+	}
+
+	retType := ""
+	if !c.eof() && c.current().Literal != "{" {
+		tok := c.current()
+		if tok.Kind == token.Type || tok.Kind == token.Identifier {
+			retType = tok.Literal
+			c.advance(1)
+		}
+	}
+
+	_, err = c.expectLiteral("{")
+	if err != nil {
+		return nil, err
+	}
+
+	var body []ast.Node
+	for !c.eof() && c.current().Literal != "}" {
+		stmt, err := parseDeclaration(c)
+		if err != nil {
+			stmt, _, err = parseExpression(c, 0)
+			if err != nil {
+				return nil, err
+			}
+		}
+		body = append(body, stmt)
+	}
+
+	_, err = c.expectLiteral("}")
+	if err != nil {
+		return nil, err
+	}
+
+	return ast.Function{
+		Name:       name,
+		ReturnType: retType,
+		Arguments:  args,
+		Body:       body,
+	}, nil
 }

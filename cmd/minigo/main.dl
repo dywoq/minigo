@@ -1,5 +1,3 @@
-
-x := "hi"
-y := "bye"
-result := x + y + (20 + 20)
-
+func s(x int, y int, args ... string)  {
+	s := 2 + 2
+} 
