@@ -37,6 +37,7 @@ var defaultTokenizers = []tokenizer{
 	tokenizeType,
 	tokenizeNumber,
 	tokenizeSeparator,
+	tokenizeString,
 }
 
 // New returns a pointer to Scanner with the given io.Reader instance.

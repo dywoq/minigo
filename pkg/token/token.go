@@ -53,6 +53,7 @@ var (
 	Type       Kind = "type"
 	Keyword    Kind = "keyword"
 	Separator  Kind = "separator"
+	String     Kind = "string"
 	Eof        Kind = "eof"
 	Illegal    Kind = "illegal"
 )

@@ -71,10 +71,10 @@ func parseVariable(c context) (ast.Node, error) {
 		return nil, err
 	}
 
-	var typeKind token.Kind
+	var typeName string
 	t := c.current()
 	if t != nil && t.Kind == token.Type {
-		typeKind = t.Kind
+		typeName = t.Literal
 		c.advance(1)
 	}
 
@@ -90,7 +90,7 @@ func parseVariable(c context) (ast.Node, error) {
 
 	return ast.Variable{
 		Name:  ident.Literal,
-		Type:  typeKind,
+		Type:  typeName,
 		Value: val,
 	}, nil
 }
@@ -106,7 +106,7 @@ func parseShortVariable(name string, c context) (ast.Node, error) {
 	}
 	return ast.Variable{
 		Name:  name,
-		Type:  kind,
+		Type:  string(kind),
 		Value: val,
 	}, nil
 }
@@ -118,7 +118,7 @@ func parseValue(c context) (ast.Node, token.Kind, error) {
 	}
 
 	switch t.Kind {
-	case token.Integer, token.Float:
+	case token.Integer, token.Float, token.String:
 		c.advance(1)
 		return ast.Value{Value: t.Literal}, t.Kind, nil
 

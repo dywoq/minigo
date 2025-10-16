@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 
@@ -38,6 +39,10 @@ func main() {
 	}
 
 	for _, statement := range file.Statements {
-		fmt.Printf("statement: %v\n", statement)
+		content, err := json.MarshalIndent(statement, "", "   ")
+		if err != nil {
+			panic(err)
+		}
+		fmt.Printf("statement: %v\n", string(content))
 	}
 }

@@ -158,6 +158,37 @@ func tokenizeIdentifier(c context) (*token.Token, error) {
 	return c.new(str, token.Identifier), nil
 }
 
+func tokenizeString(c context) (*token.Token, error) {
+	r, _ := c.current()
+	if r != '"' && r != '`' {
+		return nil, errNoMatch
+	}
+
+	multiline := false
+	if r == '`' {
+		multiline = true
+	}
+
+	c.advance(1)
+	start, line := c.position().Position, c.position().Line
+	for {
+		r, _ := c.current()
+		if c.eof() || (r == '"' || r == '`') {
+			break
+		}
+		c.advance(1)
+		if c.position().Line != line && !multiline {
+			return nil, fmt.Errorf("a string with '\"' quote doesn't allow multiline")
+		}
+	}
+	c.advance(1)
+	str, err := c.slice(start, c.position().Position-1)
+	if err != nil {
+		return nil, err
+	}
+	return c.new(str, token.String), nil
+}
+
 func selectWordAndCheck(c context, collection token.Collection) (string, error) {
 	if r, _ := c.current(); !unicode.IsLetter(r) {
 		return "", errNoMatch
