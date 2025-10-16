@@ -26,8 +26,9 @@ type Value struct {
 //
 //  z := "Goodbye!"
 type Variable struct {
-	Literal Node       `json:"literal"`
-	Type    token.Kind `json:"type"`
+	Name  string     `json:"string"`
+	Value Node       `json:"value"`
+	Type  token.Kind `json:"type"`
 }
 
 // Function presentation in code:
@@ -86,6 +87,19 @@ type FunctionValue struct {
 	Body       []Node             `json:"node"`
 }
 
+// TypeConversion presentation in code:
+//
+//  x := string("Hi!")
+type TypeConversion struct {
+	To    string
+	Value Node
+}
+
+// File represents the whole parsed file with node statements.
+type File struct {
+	Statements []Node
+}
+
 func (Value) node()            {}
 func (Variable) node()         {}
 func (Function) node()         {}
@@ -93,3 +107,5 @@ func (FunctionArgument) node() {}
 func (Call) node()             {}
 func (CallArgument) node()     {}
 func (FunctionValue) node()    {}
+func (File) node()             {}
+func (TypeConversion) node()   {}
