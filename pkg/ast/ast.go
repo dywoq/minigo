@@ -7,6 +7,8 @@ type Node interface {
 	node()
 }
 
+type Type string
+
 // Value presentation in code:
 //
 //  var x = "Hi!"
@@ -28,7 +30,7 @@ type Value struct {
 type Variable struct {
 	Name  string `json:"string"`
 	Value Node   `json:"value"`
-	Type  string `json:"type"`
+	Type  Type   `json:"type"`
 }
 
 // Function presentation in code:
@@ -98,6 +100,28 @@ type TypeConversion struct {
 // File represents the whole parsed file with node statements.
 type File struct {
 	Statements []Node `json:"statements"`
+}
+
+const (
+	TypeString       Type = "string"
+	TypeInteger      Type = "integer"
+	TypeFloat        Type = "float"
+	TypeOfIdentifier Type = "of-identifier"
+	TypeUnknown      Type = "unknown"
+)
+
+func TypeFromKind(t token.Kind) Type {
+	switch t {
+	case token.Integer:
+		return TypeInteger
+	case token.Float:
+		return TypeFloat
+	case token.String:
+		return TypeString
+	case token.Identifier:
+		return TypeOfIdentifier
+	}
+	return TypeUnknown
 }
 
 func (Value) node()            {}
